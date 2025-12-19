@@ -6,7 +6,10 @@
     <title>Login - Sistema de Reservas</title>
 </head>
 <body>
+<a href="{% url 'volverlogin' %}"> <button class="volver">Volver</button> </a>
+
 <div class="login-container">
+
     <h2> Crear cuenta </h2>
     <p class="hotel-name">Sistema de Reservas </p>
 
@@ -41,6 +44,7 @@
 </div>
 </body>
 </html>
+
 
     <style>
         body {
@@ -109,6 +113,24 @@
             font-size: 1.2em;
             margin-bottom: 25px;
             color: #666;
+        }
+
+        .volver{
+            position: fixed;          /* Se mantiene aunque hagas scroll */
+            top: 20px;                /* Separación desde arriba */
+            right: 20px;              /* Separación desde la derecha */
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            width: auto;  /*Evita que ocupe rodo el ancho*/
+
+        }
+        .volver:hover {
+            background-color: blue;
         }
 
     </style>

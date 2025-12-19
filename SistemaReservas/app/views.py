@@ -16,3 +16,6 @@ def index(request):
 
 def registro(request):
     return render(request, 'registro.html')
+
+def volverlogin(request):
+    return render(request, 'login.html')
