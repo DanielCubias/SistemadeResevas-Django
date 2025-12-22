@@ -2,7 +2,7 @@ from django.db import models
 
 # Create your models here.
 from django.contrib.auth.models import AbstractUser
-from django.db import models
+from django.conf import settings
 
 class Usuario(AbstractUser):
     rol = models.CharField(
@@ -12,8 +12,6 @@ class Usuario(AbstractUser):
     )
 
 
-from django.db import models
-from django.conf import settings
 
 class Reserva(models.Model):
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
