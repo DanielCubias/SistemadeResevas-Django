@@ -56,7 +56,7 @@ ROOT_URLCONF = 'SistemaReservas.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,8 +76,12 @@ WSGI_APPLICATION = 'SistemaReservas.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'ITIC_DB',
+        'USER': 'ITIC_user',
+        'PASSWORD': 'ITIC',
+        'HOST': 'localhost',      # MUY IMPORTANTE
+        'PORT': '5433',
     }
 }
 
@@ -122,3 +126,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# AUTH_USER_MODEL
+# es una configuración clave en Django que indica qué modelo se usará como modelo de usuario del sistema de autenticación
+# con esto puedo personalizar un modelo por si necestio añadir rol, telefono, DNI, avatar etc...
+
+# ¡¡¡¡MUY IMPORTANTE, ESTO DEBE DE DEFINIRSE AL INICIO DEL PROYECTO!!!
+
+AUTH_USER_MODEL = 'app.Usuario'

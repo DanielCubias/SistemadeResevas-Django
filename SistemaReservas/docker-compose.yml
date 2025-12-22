@@ -1,0 +1,26 @@
+version: '3.1'
+services:
+  db:
+    image: postgres:14
+    container_name: db
+    environment:
+      - POSTGRES_DB=ITIC_DB
+      - POSTGRES_PASSWORD=ITIC
+      - POSTGRES_USER=ITIC_user
+    ports:
+      - "5433:5432"
+    volumes:
+      - local_pgdata:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    ports:
+      - "80:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: 2013.1b.cubdaniel@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: daniel123
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+volumes:
+  local_pgdata:
+  pgadmin-data:
