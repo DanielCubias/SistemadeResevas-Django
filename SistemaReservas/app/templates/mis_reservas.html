@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mis Reservas</title>
+</head>
+<body>
+
+<h2>Mis Reservas</h2>
+
+{% if reservas %}
+    <ul>
+        {% for reserva in reservas %}
+            <li>
+                {{ reserva.fecha }} |
+                {{ reserva.hora_inicio }} - {{ reserva.hora_fin }}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No tienes reservas.</p>
+{% endif %}
+
+<a href="{% url 'volverlogin' %}">Cerrar sesión</a>
+
+</body>
+</html>

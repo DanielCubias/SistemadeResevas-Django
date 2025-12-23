@@ -134,3 +134,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ¡¡¡¡MUY IMPORTANTE, ESTO DEBE DE DEFINIRSE AL INICIO DEL PROYECTO!!!
 
 AUTH_USER_MODEL = 'app.Usuario'
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/mis-reservas/'
+LOGOUT_REDIRECT_URL = '/login/'

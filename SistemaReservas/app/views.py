@@ -1,9 +1,13 @@
 from lib2to3.fixes.fix_input import context
 from tempfile import template
 
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.template import loader
+
+from .models import Reserva
+
 
 # Create your views here.
 
@@ -19,3 +23,8 @@ def registro(request):
 
 def volverlogin(request):
     return render(request, 'login.html')
+
+@login_required
+def mis_reservas(request):
+    reservas = Reserva.objects.filter(usuario=request.user).order_by('fecha', 'hora_inicio')
+    return render(request, 'mis_reservas.html', {'reservas': reservas})
