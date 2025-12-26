@@ -8,9 +8,11 @@
 <body>
 <div class="login-container">
     <h2> Iniciar Sesión</h2>
+
     {% if error %}
     <p style="color:red;">{{ error }}</p>
     {% endif %}
+
     <p class="hotel-name">Sistema de Reservas </p>
 
    <form method="POST" action="{% url 'login' %}">

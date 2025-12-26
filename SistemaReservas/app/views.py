@@ -4,6 +4,10 @@ from tempfile import template
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render,redirect
+from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 from django.http import HttpResponse
 from django.template import loader
 
@@ -20,8 +24,25 @@ from .models import Reserva
 #     return HttpResponse(template.render())
 
 def registro(request):
-    return render(request, 'registro.html')
+    if request.method == "POST":
+        username = request.POST["username"]
+        email = request.POST["email"]
+        password = request.POST["password"]
+        password2 = request.POST["password2"]
 
+        if password != password2:
+            return render(request, "registro.html", {"error": "Las contraseñas no coinciden"})
+
+        User = get_user_model()
+        if User.objects.filter(username=username).exists():
+            return render(request, "registro.html", {"error": "El nombre de usuario ya existe"})
+
+
+        User.objects.create_user(username=username, email=email, password=password)
+
+        return redirect("login")
+
+    return render(request, "registro.html")
 # def volverlogin(request):
 #     return render(request, 'login.html')
 

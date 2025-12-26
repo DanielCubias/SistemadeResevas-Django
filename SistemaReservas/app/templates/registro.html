@@ -6,14 +6,16 @@
     <title>Login - Sistema de Reservas</title>
 </head>
 <body>
-<a href="{% url 'login' %}"> <button class="volver">Volver</button> </a>
+<a href="{% url 'login' %}" class="volver"> Volver </a>
 
 <div class="login-container">
 
     <h2> Crear cuenta </h2>
     <p class="hotel-name">Sistema de Reservas </p>
 
-    <form action="/login/" method="POST">
+<!--    nunca meter un form dentro de otro form-->
+    <form action="{% url 'registro' %}" method="POST">
+        {% csrf_token %}
 
         <div class="input-group">
             <label for="username"> Nombre </label>
@@ -21,27 +23,22 @@
         </div>
 
         <div class="input-group">
-            <label for="gmail">Correo electronico </label>
-            <input type="email" id="gmail" name="password" required>
+            <label>Correo electronico </label>
+            <input type="email" name="email" required>
         </div>
 
          <div class="input-group">
-            <label for="firtsPassword"> Contraseña  </label>
-            <input type="password" id="firtsPassword" name="password" required>
+            <label> Contraseña  </label>
+            <input type="password" name="password" required>
         </div>
 
          <div class="input-group">
-            <label for="confirmPassword"> Repetir contraseña  </label>
-            <input type="password" id="confirmPassword" name="password" required>
+            <label > Repetir contraseña  </label>
+            <input type="password" name="password2" required>
         </div>
 
         <button type="submit">Entrar</button>
-         {% csrf_token %}
     </form>
-
-    <p style="margin-top: 20px;">
-        ¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate aquí</a>
-    </p>
 </div>
 </body>
 </html>
