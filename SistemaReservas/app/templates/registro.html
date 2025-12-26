@@ -6,7 +6,7 @@
     <title>Login - Sistema de Reservas</title>
 </head>
 <body>
-<a href="{% url 'volverlogin' %}"> <button class="volver">Volver</button> </a>
+<a href="{% url 'login' %}"> <button class="volver">Volver</button> </a>
 
 <div class="login-container">
 
@@ -36,6 +36,7 @@
         </div>
 
         <button type="submit">Entrar</button>
+         {% csrf_token %}
     </form>
 
     <p style="margin-top: 20px;">

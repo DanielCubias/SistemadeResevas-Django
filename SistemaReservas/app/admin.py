@@ -1,10 +1,10 @@
 from django.contrib import admin
 from .models import Usuario,Reserva
-
+from django.contrib.auth.admin import UserAdmin
 # Register your models here.
 
 @admin.register(Usuario)
-class UsuarioAdmin(admin.ModelAdmin):
+class UsuarioAdmin(UserAdmin):
     list_display = ('username', 'email', 'rol', 'is_staff', 'is_active')
     list_filter = ('rol', 'is_staff')
     search_fields = ('username', 'email')
