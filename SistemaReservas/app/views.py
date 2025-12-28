@@ -4,12 +4,14 @@ from tempfile import template
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render,redirect
-from django.contrib.auth.models import User
+
+
+# utilizo lo siguinete porque tengo un modelo de usuario personalizado
+# si no, dara error : Manager isn't available; 'auth.User' has been swapped for 'app.Usuario'
+# para arreglarlo he importado mi modelo personalizado
+
 from django.contrib.auth import get_user_model
 User = get_user_model()
-
-from django.http import HttpResponse
-from django.template import loader
 
 from .models import Reserva
 

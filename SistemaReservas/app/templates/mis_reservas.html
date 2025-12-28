@@ -1,26 +1,148 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
     <title>Mis Reservas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
 
-<h2>Mis Reservas</h2>
+<div class="logout">
+    <a href="{% url 'logout' %}">Cerrar sesión</a>
+</div>
 
-{% if reservas %}
-    <ul>
-        {% for reserva in reservas %}
-            <li>
-                {{ reserva.fecha }} |
-                {{ reserva.hora_inicio }} - {{ reserva.hora_fin }}
-            </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No tienes reservas.</p>
-{% endif %}
+<div class="container">
+    <div class="header">
+        <h2>Reservas del usuario: {{ request.user.username }}</h2>
+    </div>
 
-<a href="{% url 'logout' %}">Cerrar sesión</a>
+    {% if reservas %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Hotel</th>
+                    <th>Fecha entrada</th>
+                    <th>Fecha salida</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+
+<!--            IMPORTANTE: Puedo acceder a todos los atributos que tiene reservas, ya que en views tengo una vista que renderiza a este HTML. -->
+<!--            Si tuviera otro archivo HTML llamado otro.html, no funcionaría; tendría que crear otra vista que renderice otro.html.l-->
+
+                {% for reserva in reservas %}
+                    <tr>
+                        <td>{{ reserva.id }}</td>
+                        <td>{{ reserva.hotel }}</td>
+                        <td>{{ reserva.hora_inicio }}</td>
+                        <td>{{ reserva.hora_fin }}</td>
+                        <td>
+                            <a href="#" class="view-link">VIEW</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty">
+            No tienes reservas registradas.
+        </div>
+    {% endif %}
+</div>
 
 </body>
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 60px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 22px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #f9fafb;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 14px 20px;
+            font-size: 14px;
+            color: #555;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tbody td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #eeeeee;
+            color: #444;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background-color: #f5f8ff;
+        }
+
+        .view-link {
+            color: #1a73e8;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .view-link:hover {
+            text-decoration: underline;
+        }
+
+        .logout {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+
+        .logout a {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .logout a:hover {
+            background-color: #b02a37;
+        }
+
+        .empty {
+            padding: 40px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
 </html>
