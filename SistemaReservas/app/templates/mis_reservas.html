@@ -8,8 +8,8 @@
 <body>
 
 <div class="top-buttons">
-    <a href="{% url 'login' %}" class="logout">Cerrar sesión</a>
-
+    <a href="{% url 'crear_reserva}' % " class="realizar_reserva"> Realizar reserva </a>
+    <a href="{% url 'login' %}" class="logout"> Cerrar sesión </a>
 
       <form action="{% url 'delete_count' %}" method="post" style="display:inline;">
         {% csrf_token %}
@@ -140,6 +140,7 @@
 
 /* Estilo base compartido */
 .logout,
+.realizar_reserva,
 .delete-count {
     background-color: #dc3545;
     color: white;
@@ -155,6 +156,7 @@
 
 /* Hover común */
 .logout:hover,
+.realizar_reserva,
 .delete-count:hover {
     background-color: #b02a37;
 }
@@ -163,7 +165,7 @@
 .delete-count {
     background-color: #c82333;
 }
-
+.realizar_reserva,
 .delete-count:hover {
     background-color: #a71d2a;
 }

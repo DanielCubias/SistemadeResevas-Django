@@ -1,0 +1,172 @@
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
+body {
+    margin: 0;
+    background: #f4f6f8;
+}
+
+.layout {
+    display: flex;
+    height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 220px;
+    background: #1f2933;
+    color: white;
+    padding: 20px;
+}
+
+.logo {
+    margin-bottom: 30px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar li {
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.sidebar li:hover,
+.sidebar .active {
+    background: #3b82f6;
+}
+
+.sidebar a {
+    color: white;
+    text-decoration: none;
+}
+
+/* MAIN */
+.main {
+    flex: 1;
+    padding: 25px;
+}
+
+/* TOP BAR */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.new-btn {
+    background: #3b82f6;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.new-btn:hover {
+    background: #2563eb;
+}
+
+/* CONTENT */
+.content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+/* CALENDAR */
+.calendar {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.calendar-header button {
+    border: none;
+    background: #e5e7eb;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.day-name {
+    font-weight: bold;
+    text-align: center;
+}
+
+.day {
+    background: #f9fafb;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.day span {
+    display: block;
+    font-size: 11px;
+    color: white;
+    background: #3b82f6;
+    border-radius: 10px;
+    margin-top: 5px;
+    padding: 2px;
+}
+
+.day:hover {
+    background: #e0f2fe;
+}
+
+.has-reservations {
+    border: 2px solid #3b82f6;
+}
+
+/* APPOINTMENTS */
+.appointments {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.appointment {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.status {
+    background: #22c55e;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.empty {
+    color: #666;
+    text-align: center;
+    margin-top: 30px;
+}

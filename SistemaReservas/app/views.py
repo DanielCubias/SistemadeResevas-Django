@@ -1,3 +1,4 @@
+from http.client import HTTPResponse
 from lib2to3.fixes.fix_input import context
 from tempfile import template
 
@@ -93,3 +94,7 @@ def delete_count(request):
     if request.method == "POST":
         request.user.delete()
         return redirect("login")
+
+
+def reserva(request):
+    return render(request, "Reserva.html")
