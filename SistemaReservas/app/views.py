@@ -87,3 +87,9 @@ def login_view(request):
         })
 
     return render(request, "login.html")
+
+@login_required
+def delete_count(request):
+    if request.method == "POST":
+        request.user.delete()
+        return redirect("login")

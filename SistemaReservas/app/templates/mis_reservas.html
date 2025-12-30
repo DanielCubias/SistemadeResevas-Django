@@ -7,9 +7,19 @@
 </head>
 <body>
 
-<div class="logout">
-    <a href="{% url 'login' %}">Cerrar sesión</a>
+<div class="top-buttons">
+    <a href="{% url 'login' %}" class="logout">Cerrar sesión</a>
+
+
+      <form action="{% url 'delete_count' %}" method="post" style="display:inline;">
+        {% csrf_token %}
+          <button type="submit" class="delete-count"
+          onclick="return confirm('¿estas seguro que quieres elimnar tu cuenta ?')">
+                  Eliminar cuenta
+          </button>
+    </form>
 </div>
+
 
 <div class="container">
     <div class="header">
@@ -120,25 +130,43 @@
             text-decoration: underline;
         }
 
-        .logout {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-        }
+        .top-buttons {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+}
 
-        .logout a {
-            background-color: #dc3545;
-            color: white;
-            padding: 10px 16px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 14px;
-        }
+/* Estilo base compartido */
+.logout,
+.delete-count {
+    background-color: #dc3545;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 5px;
+    font-size: 14px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: normal;
+}
 
-        .logout a:hover {
-            background-color: #b02a37;
-        }
+/* Hover común */
+.logout:hover,
+.delete-count:hover {
+    background-color: #b02a37;
+}
 
+/* OPCIONAL: eliminar cuenta más agresivo */
+.delete-count {
+    background-color: #c82333;
+}
+
+.delete-count:hover {
+    background-color: #a71d2a;
+}
         .empty {
             padding: 40px;
             text-align: center;
