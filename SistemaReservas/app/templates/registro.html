@@ -14,8 +14,16 @@
     <p class="hotel-name">Sistema de Reservas </p>
 
 <!--    nunca meter un form dentro de otro form-->
+
     <form action="{% url 'registro' %}" method="POST">
         {% csrf_token %}
+
+          {% if messages %}
+            {% for message in messages %}
+                 <p style="color:red;">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+
 
         <div class="input-group">
             <label for="username"> Nombre </label>
@@ -37,7 +45,12 @@
             <input type="password" name="password2" required>
         </div>
 
-        <button type="submit">Entrar</button>
+        <button type="submit">Crear</button>
+
+
+
+
+
     </form>
 </div>
 </body>
