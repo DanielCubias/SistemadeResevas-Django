@@ -97,4 +97,4 @@ def delete_count(request):
 
 
 def reserva(request):
-    return render(request, "Reserva.html")
+    return render(request, "reserva.html")

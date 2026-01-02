@@ -8,7 +8,7 @@
 <body>
 
 <div class="top-buttons">
-    <a href="{% url 'crear_reserva}' % " class="realizar_reserva"> Realizar reserva </a>
+    <a href="{% url 'realizar_reserva' %}" class="realizar_reserva"> Realizar reserva </a>
     <a href="{% url 'login' %}" class="logout"> Cerrar sesión </a>
 
       <form action="{% url 'delete_count' %}" method="post" style="display:inline;">
