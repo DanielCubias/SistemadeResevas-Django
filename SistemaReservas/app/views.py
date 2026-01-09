@@ -8,6 +8,7 @@ from django.shortcuts import render,redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from .models import Reserva
+from datetime import date
 
 
 # utilizo lo siguinete porque tengo un modelo de usuario personalizado
@@ -96,5 +97,25 @@ def delete_count(request):
         return redirect("login")
 
 
-def reserva(request):
-    return render(request, "reserva.html")
+@require_POST
+def hacer_reserva(request):
+    fecha_str = request.POST.get("fecha")
+
+    try:
+        fecha = date.fromisoformat(fecha_str)
+    except (ValueError, TypeError):
+        messages.error(request, "Fecha inválida")
+        return redirect("reserva")
+
+    # Evitar reservas duplicadas (opcional pero muy recomendado)
+    if Reserva.objects.filter(usuario=request.user, fecha=fecha).exists():
+        messages.warning(request, f"Ya tienes una reserva para el {fecha}")
+        return redirect("reserva")
+
+    Reserva.objects.create(
+        usuario=request.user,
+        fecha=fecha
+    )
+
+    messages.success(request, f"¡Reserva creada para el {fecha}!")
+    return redirect("reserva" + f"?fecha={fecha}")

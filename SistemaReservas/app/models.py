@@ -6,6 +6,15 @@ from django.db import models
 # Create your models here.
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.contrib.auth.models import User
+
+
+class Reserva(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    fecha = models.DateField()
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.fecha}"
 
 class Usuario(AbstractUser):
     rol = models.CharField(
