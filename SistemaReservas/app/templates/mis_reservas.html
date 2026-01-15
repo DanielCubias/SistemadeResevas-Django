@@ -4,175 +4,134 @@
     <meta charset="UTF-8">
     <title>Mis Reservas</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
 
-<div class="top-buttons">
-    <a href="{% url 'realizar_reserva' %}" class="realizar_reserva"> Realizar reserva </a>
-    <a href="{% url 'login' %}" class="logout"> Cerrar sesión </a>
+    <!-- Fuente moderna -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
-      <form action="{% url 'delete_count' %}" method="post" style="display:inline;">
-        {% csrf_token %}
-          <button type="submit" class="delete-count"
-          onclick="return confirm('¿estas seguro que quieres elimnar tu cuenta ?')">
-                  Eliminar cuenta
-          </button>
-    </form>
-</div>
-
-
-<div class="container">
-    <div class="header">
-        <h2>Reservas del usuario: {{ request.user.username }}</h2>
-    </div>
-
-    {% if reservas %}
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Hotel</th>
-                    <th>Fecha entrada</th>
-                    <th>Fecha salida</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-
-<!--            IMPORTANTE: Puedo acceder a todos los atributos que tiene reservas, ya que en views tengo una vista que renderiza a este HTML. -->
-<!--            Si tuviera otro archivo HTML llamado otro.html, no funcionaría; tendría que crear otra vista que renderice otro.html.l-->
-
-                {% for reserva in reservas %}
-                    <tr>
-                        <td>{{ reserva.id }}</td>
-                        <td>{{ reserva.hotel }}</td>
-                        <td>{{ reserva.hora_inicio }}</td>
-                        <td>{{ reserva.hora_fin }}</td>
-                        <td>
-                            <a href="#" class="view-link">VIEW</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <div class="empty">
-            No tienes reservas registradas.
-        </div>
-    {% endif %}
-</div>
-
-</body>
     <style>
         body {
-            font-family: "Segoe UI", Arial, sans-serif;
-            background-color: #f4f6f8;
+            font-family: "Inter", sans-serif;
+            background-color: #f3f4f6;
             margin: 0;
             padding: 0;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 60px auto;
+        /* ---------------- TOP BAR ---------------- */
+        .top-buttons {
+            position: fixed;
+            top: 0;
+            width: 100%;
             background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            overflow: hidden;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            z-index: 10;
         }
 
-        .header {
-            padding: 20px 30px;
-            border-bottom: 1px solid #e0e0e0;
+        .top-buttons a,
+        .top-buttons button {
+            background-color: #2563eb;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s ease;
         }
 
-        .header h2 {
-            margin: 0;
-            color: #333;
-            font-size: 22px;
+        .top-buttons a:hover,
+        .top-buttons button:hover {
+            background-color: #1e40af;
         }
 
-        table {
+        .delete-count {
+            background-color: #dc2626 !important;
+        }
+
+        .delete-count:hover {
+            background-color: #991b1b !important;
+        }
+
+        /* ---------------- CALENDARIO ---------------- */
+        .calendar-container {
+            max-width: 900px;
+            margin: 120px auto 40px auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        .calendar-title {
+            text-align: center;
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #1f2937;
+        }
+
+        .calendar-table {
             width: 100%;
             border-collapse: collapse;
-        }
-
-        thead {
-            background-color: #f9fafb;
-        }
-
-        thead th {
-            text-align: left;
-            padding: 14px 20px;
-            font-size: 14px;
-            color: #555;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        tbody td {
-            padding: 16px 20px;
-            border-bottom: 1px solid #eeeeee;
-            color: #444;
-            font-size: 14px;
-        }
-
-        tbody tr:hover {
-            background-color: #f5f8ff;
-        }
-
-        .view-link {
-            color: #1a73e8;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 13px;
-        }
-
-        .view-link:hover {
-            text-decoration: underline;
-        }
-
-        .top-buttons {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    gap: 10px;
-}
-
-/* Estilo base compartido */
-.logout,
-.realizar_reserva,
-.delete-count {
-    background-color: #dc3545;
-    color: white;
-    padding: 10px 16px;
-    border-radius: 5px;
-    font-size: 14px;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    line-height: normal;
-}
-
-/* Hover común */
-.logout:hover,
-.realizar_reserva,
-.delete-count:hover {
-    background-color: #b02a37;
-}
-
-/* OPCIONAL: eliminar cuenta más agresivo */
-.delete-count {
-    background-color: #c82333;
-}
-.realizar_reserva,
-.delete-count:hover {
-    background-color: #a71d2a;
-}
-        .empty {
-            padding: 40px;
             text-align: center;
-            color: #666;
+            font-size: 15px;
+        }
+
+        .calendar-table th {
+            background: #e5e7eb;
+            padding: 12px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .calendar-table td {
+            padding: 18px;
+            border: 1px solid #e5e7eb;
+            color: #374151;
+            height: 60px;
+        }
+
+        .calendar-table .empty-day {
+            background: #f9fafb;
+        }
+
+        .calendar-table .day:hover {
+            background: #dbeafe;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .calendar-table th,
+            .calendar-table td {
+                padding: 10px;
+                font-size: 12px;
+            }
         }
     </style>
+</head>
+
+<body>
+
+<!-- TOP BAR -->
+<div class="top-buttons">
+    <a href="{% url 'calendario' %}" class="realizar_reserva">Realizar reserva</a>
+    <a href="{% url 'login' %}" class="logout">Cerrar sesión</a>
+
+    <form action="{% url 'delete_count' %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="delete-count"
+                onclick="return confirm('¿Estás seguro de que quieres eliminar tu cuenta?')">
+            Eliminar cuenta
+        </button>
+    </form>
+</div>
+
+
+</body>
 </html>

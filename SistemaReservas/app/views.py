@@ -1,6 +1,6 @@
-from http.client import HTTPResponse
-from lib2to3.fixes.fix_input import context
-from tempfile import template
+
+import calendar
+from datetime import date
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
@@ -8,7 +8,10 @@ from django.shortcuts import render,redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from .models import Reserva
+import calendar
 from datetime import date
+from django.shortcuts import render
+
 
 
 # utilizo lo siguinete porque tengo un modelo de usuario personalizado
@@ -97,25 +100,50 @@ def delete_count(request):
         return redirect("login")
 
 
-@require_POST
-def hacer_reserva(request):
-    fecha_str = request.POST.get("fecha")
 
-    try:
-        fecha = date.fromisoformat(fecha_str)
-    except (ValueError, TypeError):
-        messages.error(request, "Fecha inválida")
-        return redirect("reserva")
+def reserva(request):
+    return render(request, "calendario.html")
 
-    # Evitar reservas duplicadas (opcional pero muy recomendado)
-    if Reserva.objects.filter(usuario=request.user, fecha=fecha).exists():
-        messages.warning(request, f"Ya tienes una reserva para el {fecha}")
-        return redirect("reserva")
 
-    Reserva.objects.create(
-        usuario=request.user,
-        fecha=fecha
-    )
 
-    messages.success(request, f"¡Reserva creada para el {fecha}!")
-    return redirect("reserva" + f"?fecha={fecha}")
+
+
+def calendario(request):
+    # Mes/año actual por defecto, o el que venga por querystring
+    today = date.today()
+    year = int(request.GET.get("year", today.year))
+    month = int(request.GET.get("month", today.month))
+
+    # Asegurar que la semana empieza en lunes
+    calendar.setfirstweekday(calendar.MONDAY)
+
+    # Matriz de semanas: 0 significa "hueco" (días del mes anterior/siguiente)
+    month_matrix = calendar.monthcalendar(year, month)
+
+    # Convertimos a estructura amigable para el template
+    month_days = []
+    for week in month_matrix:
+        week_days = []
+        for d in week:
+            if d == 0:
+                week_days.append(None)
+            else:
+                week_days.append({"num": d})
+        month_days.append(week_days)
+
+    month_name = calendar.month_name[month]  # "January", "February", etc.
+
+    # Mes anterior / siguiente
+    prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
+    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+
+    return render(request, "calendario.html", {
+        "year": year,
+        "month": month,
+        "month_name": month_name,
+        "month_days": month_days,
+        "prev_year": prev_year,
+        "prev_month": prev_month,
+        "next_year": next_year,
+        "next_month": next_month,
+    })
