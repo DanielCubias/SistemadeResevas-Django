@@ -1,214 +1,183 @@
-(function () {
-  const overlay = document.getElementById("modalOverlay");
-  const modalText = document.getElementById("modalText");
-  const btnClose = document.getElementById("btnClose");
-  const btnReserve = document.getElementById("btnReserveRange");
-  const btnCancel = document.getElementById("btnCancelRange");
+function getCSRFToken() {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute("content") : "";
+}
 
-  if (!overlay || !modalText || !btnClose || !btnReserve || !btnCancel) return;
+function isoToDate(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
 
-  const year = Number(document.body.dataset.year);
-  const month = Number(document.body.dataset.month);
-  if (!Number.isFinite(year) || !Number.isFinite(month)) return;
+function dateToISO(dt) {
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
-  const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
-  const storageKey = `reservas_${year}_${month}`;
+function eachDayInclusive(startISO, endISO) {
+  const start = isoToDate(startISO);
+  const end = isoToDate(endISO);
+  const out = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    out.push(dateToISO(d));
+  }
+  return out;
+}
 
-  function loadSelectedDays() {
-    try {
-      const v = JSON.parse(localStorage.getItem(storageKey));
-      return Array.isArray(v) ? v.map(Number) : [];
-    } catch {
-      return [];
-    }
+document.addEventListener("DOMContentLoaded", () => {
+  const dayButtons = Array.from(document.querySelectorAll(".day[data-date]"));
+  const reserved = new Set(window.RESERVED_DATES || []);
+
+  const checkInLabel = document.getElementById("checkInLabel");
+  const checkOutLabel = document.getElementById("checkOutLabel");
+  const confirmBtn = document.getElementById("confirmBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const errorBox = document.getElementById("errorBox");
+
+  let startISO = null;
+  let endISO = null;
+
+  function showError(msg) {
+    errorBox.hidden = false;
+    errorBox.textContent = msg;
   }
 
-  function saveSelectedDays(days) {
-    const uniq = Array.from(new Set(days.map(Number))).sort((a, b) => a - b);
-    localStorage.setItem(storageKey, JSON.stringify(uniq));
+  function clearError() {
+    errorBox.hidden = true;
+    errorBox.textContent = "";
   }
 
-  function paintFromList(days) {
-    const selected = new Set(days);
-    document.querySelectorAll(".js-day").forEach((cell) => {
-      const d = Number(cell.dataset.day);
-      cell.classList.toggle("selected", selected.has(d));
+  function paintReserved() {
+    dayButtons.forEach(btn => {
+      const iso = btn.dataset.date;
+      if (reserved.has(iso)) {
+        btn.classList.add("reserved");
+        btn.disabled = true; // clave: no seleccionar ocupados
+      }
     });
   }
 
-  async function syncFromServer() {
-    const res = await fetch(`/reservas/mes/?year=${year}&month=${month}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data.ok) return;
-    paintFromList(data.days);
-    saveSelectedDays(data.days); // opcional
-  }
-
-  function clearPreview() {
-    document.querySelectorAll(".js-day").forEach((cell) => {
-      cell.classList.remove("preview", "start", "end");
+  function resetSelectionPaint() {
+    dayButtons.forEach(btn => {
+      btn.classList.remove("selected", "in-range");
     });
   }
 
-  function previewRange(from, to) {
-    clearPreview();
-    const a = Math.min(from, to);
-    const b = Math.max(from, to);
+  function paintSelection() {
+    resetSelectionPaint();
+    if (!startISO) return;
 
-    document.querySelectorAll(".js-day").forEach((cell) => {
-      const d = Number(cell.dataset.day);
-      if (d >= a && d <= b) cell.classList.add("preview");
-      if (d === a) cell.classList.add("start");
-      if (d === b) cell.classList.add("end");
+    const s = startISO;
+    const e = endISO || startISO;
+
+    const range = eachDayInclusive(s, e);
+    range.forEach((iso, idx) => {
+      const btn = dayButtons.find(b => b.dataset.date === iso);
+      if (!btn) return;
+      if (idx === 0 || idx === range.length - 1) btn.classList.add("selected");
+      else btn.classList.add("in-range");
     });
   }
 
-  let startDay = null;
-  let endDay = null;
-  let pendingRange = null;
-
-  function openModal(from, to) {
-    const a = Math.min(from, to);
-    const b = Math.max(from, to);
-    pendingRange = { from: a, to: b };
-
-    modalText.textContent =
-      a === b
-        ? `¿Qué quieres hacer con el día ${a}/${month}/${year}?`
-        : `Has seleccionado del ${a}/${month}/${year} al ${b}/${month}/${year}. ¿Quieres reservar o cancelar ese rango?`;
-
-    overlay.classList.remove("hidden");
+  function updateUI() {
+    checkInLabel.textContent = startISO || "—";
+    checkOutLabel.textContent = endISO || "—";
+    confirmBtn.disabled = !(startISO && endISO);
   }
 
-  function closeModal() {
-    overlay.classList.add("hidden");
-    pendingRange = null;
+  function normalizeRange(a, b) {
+    return (a <= b) ? [a, b] : [b, a];
   }
 
-  function resetSelection() {
-    startDay = null;
-    endDay = null;
-    clearPreview();
+  function rangeHitsReserved(a, b) {
+    const [s, e] = normalizeRange(a, b);
+    const days = eachDayInclusive(s, e);
+    return days.some(d => reserved.has(d));
   }
 
-  async function postJSON(url, body) {
-    const res = await fetch(url, {
+  async function createReserva(checkIn, checkOut) {
+    const res = await fetch("/api/reservas/crear/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": csrf || "",
+        "X-CSRFToken": getCSRFToken(),
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ check_in: checkIn, check_out: checkOut }),
     });
 
-    let data = null;
-    try { data = await res.json(); } catch {}
-    return { res, data };
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.error || "Error creando la reserva.");
+    }
+    return data.reserva;
   }
 
-  async function reserveRange(range) {
-    if (!csrf) {
-      alert("Falta CSRF token en el HTML (meta csrf-token).");
-      return;
-    }
+  // Inicial
+  paintReserved();
+  updateUI();
 
-    const { res, data } = await postJSON("/reservas/rango/", {
-      year,
-      month,
-      from: range.from,
-      to: range.to,
-      hora_inicio: "09:00",
-      hora_fin: "10:00",
-    });
+  dayButtons.forEach(btn => {
+    btn.addEventListener("click", async () => {
+      clearError();
+      const iso = btn.dataset.date;
 
-    if (!res.ok || !data?.ok) {
-      alert("Error guardando en servidor");
-      return;
-    }
-
-    await syncFromServer();
-  }
-
-  async function cancelRange(range) {
-    if (!csrf) {
-      alert("Falta CSRF token en el HTML (meta csrf-token).");
-      return;
-    }
-
-    const { res, data } = await postJSON("/reservas/cancelar-rango/", {
-      year,
-      month,
-      from: range.from,
-      to: range.to,
-      hora_inicio: "09:00",
-      hora_fin: "10:00",
-    });
-
-    if (!res.ok || !data?.ok) {
-      alert("Error cancelando en servidor");
-      return;
-    }
-
-    await syncFromServer();
-  }
-
-  document.querySelectorAll(".js-day").forEach((cell) => {
-    cell.addEventListener("click", () => {
-      const d = Number(cell.dataset.day);
-
-      if (startDay === null) {
-        startDay = d;
-        endDay = null;
-        previewRange(startDay, startDay);
+      if (reserved.has(iso)) {
+        showError("Ese día ya está reservado.");
         return;
       }
 
-      if (endDay === null) {
-        endDay = d;
-        previewRange(startDay, endDay);
-        openModal(startDay, endDay);
+      // Primer click: set check-in
+      if (!startISO) {
+        startISO = iso;
+        endISO = null;
+        paintSelection();
+        updateUI();
         return;
       }
 
-      startDay = d;
-      endDay = null;
-      previewRange(startDay, startDay);
-    });
+      // Segundo click: set check-out (ordenar rango)
+      const [s, e] = normalizeRange(startISO, iso);
 
-    cell.addEventListener("mouseenter", () => {
-      if (startDay !== null && endDay === null) {
-        previewRange(startDay, Number(cell.dataset.day));
+      // No permitas rangos que atraviesen reservados
+      if (rangeHitsReserved(s, e)) {
+        showError("El rango incluye días ya reservados. Elige otro rango.");
+        return;
       }
+
+      startISO = s;
+      endISO = e;
+      paintSelection();
+      updateUI();
     });
   });
 
-  btnReserve.addEventListener("click", async () => {
-    if (!pendingRange) return;
-    await reserveRange(pendingRange);
-    closeModal();
-    resetSelection();
+  clearBtn.addEventListener("click", () => {
+    clearError();
+    startISO = null;
+    endISO = null;
+    resetSelectionPaint();
+    updateUI();
   });
 
-  btnCancel.addEventListener("click", async () => {
-    if (!pendingRange) return;
-    await cancelRange(pendingRange);
-    closeModal();
-    resetSelection();
-  });
+  confirmBtn.addEventListener("click", async () => {
+    clearError();
+    if (!(startISO && endISO)) return;
 
-  btnClose.addEventListener("click", () => {
-    closeModal();
-    resetSelection();
-  });
+    try {
+      const reserva = await createReserva(startISO, endISO);
 
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) {
-      closeModal();
-      resetSelection();
+      // Marca reservado en UI
+      eachDayInclusive(reserva.check_in, reserva.check_out).forEach(d => reserved.add(d));
+      resetSelectionPaint();
+      paintReserved();
+
+      startISO = null;
+      endISO = null;
+      updateUI();
+    } catch (err) {
+      showError(err.message || "Error.");
     }
   });
-
-  // cargar reservas del mes desde BD y pintar
-  syncFromServer();
-})();
+});

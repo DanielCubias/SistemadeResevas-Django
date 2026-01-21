@@ -18,40 +18,30 @@ class Usuario(AbstractUser):
     )
 
 
+from django.conf import settings
+from django.db import models
+from django.core.exceptions import ValidationError
 
 
 class Reserva(models.Model):
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    fecha = models.DateField()
-    hora_inicio = models.TimeField()
-    hora_fin = models.TimeField()
-    creado_en = models.DateTimeField(auto_now_add=True)
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reservas"
+    )
+    check_in = models.DateField()
+    check_out = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["usuario", "fecha", "hora_inicio", "hora_fin"],
-                name="uniq_reserva_exacta"
-            )
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["check_in", "check_out"]),
         ]
 
     def clean(self):
-        if self.hora_fin <= self.hora_inicio:
-            raise ValidationError("La hora de fin debe ser posterior a la hora de inicio")
-
-        reservas = Reserva.objects.filter(
-            usuario=self.usuario,
-            fecha=self.fecha,
-        ).exclude(pk=self.pk)
-
-        for x in reservas:
-            if self.hora_inicio < x.hora_fin and self.hora_fin > x.hora_inicio:
-                raise ValidationError("La reserva se solapa con otra existente")
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
+        if self.check_in and self.check_out and self.check_in > self.check_out:
+            raise ValidationError("check_in no puede ser mayor que check_out.")
 
     def __str__(self):
-        return f"{self.usuario} - {self.fecha} {self.hora_inicio}-{self.hora_fin}"
-
+        return f"{self.usuario} {self.check_in} -> {self.check_out}"

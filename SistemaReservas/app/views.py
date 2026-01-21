@@ -1,167 +1,140 @@
 import calendar
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
-from django.contrib import messages
-from django.contrib.auth import authenticate, login
-from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
-from django.views.decorators.http import require_POST, require_GET
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.http import require_POST
 
 from .models import Reserva
 
-User = get_user_model()
 
-def registro(request):
-    if request.method == "POST":
-        username = request.POST["username"]
-        email = request.POST["email"]
-        password = request.POST["password"]
-        password2 = request.POST["password2"]
+def _month_prev_next(year: int, month: int):
+    if month == 1:
+        return (year - 1, 12), (year, 2)
+    if month == 12:
+        return (year, 11), (year + 1, 1)
+    return (year, month - 1), (year, month + 1)
 
-        if not username or not email or not password or not password2:
-            messages.error(request, "Faltan campos por rellenar")
-            return render(request, "registro.html")
 
-        if password != password2:
-            messages.error(request, "Las contraseñas no coinciden")
-            return render(request, "registro.html")
+def _date_range_inclusive(start: date, end: date):
+    cur = start
+    while cur <= end:
+        yield cur
+        cur += timedelta(days=1)
 
-        if User.objects.filter(username=username).exists():
-            messages.error(request, "El nombre de usuario ya existe")
-            return render(request, "registro.html")
-
-        User.objects.create_user(username=username, email=email, password=password)
-        messages.success(request, "Usuario creado correctamente")
-        return redirect("login")
-
-    return render(request, "registro.html")
-
-def login_view(request):
-    if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-
-        user = authenticate(request, username=username, password=password)
-        if user:
-            login(request, user)
-            return redirect("calendario")
-
-        return render(request, "login.html", {"error": "Usuario o contraseña incorrectos"})
-
-    return render(request, "login.html")
 
 @login_required
-def mis_reservas(request):
-    reservas = Reserva.objects.filter(usuario=request.user).order_by("fecha", "hora_inicio")
-    return render(request, "mis_reservas.html", {"reservas": reservas})
-
-@login_required
-def calendario(request):
+def calendario_view(request):
     today = date.today()
+
     year = int(request.GET.get("year", today.year))
     month = int(request.GET.get("month", today.month))
 
-    calendar.setfirstweekday(calendar.MONDAY)
-    month_matrix = calendar.monthcalendar(year, month)
+    # Construye semanas del mes (lunes = 0)
+    cal = calendar.Calendar(firstweekday=0)
+    weeks = []
+    for week in cal.monthdatescalendar(year, month):
+        weeks.append([{
+            "day": d.day,
+            "date": d.isoformat(),
+            "in_month": (d.month == month),
+            "is_today": (d == today),
+        } for d in week])
 
-    month_days = []
-    for week in month_matrix:
-        week_days = []
-        for d in week:
-            week_days.append({"num": d} if d != 0 else None)
-        month_days.append(week_days)
+    (prev_year, prev_month), (next_year, next_month) = _month_prev_next(year, month)
+    month_name = calendar.month_name[month].capitalize()
 
-    month_name = calendar.month_name[month]
+    # Reservas que solapan con este mes (para pintar en verde)
+    month_start = date(year, month, 1)
+    last_day = calendar.monthrange(year, month)[1]
+    month_end = date(year, month, last_day)
 
-    prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
-    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+    reservas_mes = Reserva.objects.filter(
+        check_in__lte=month_end,
+        check_out__gte=month_start,
+    )
 
-    return render(request, "calendario.html", {
+    reserved_dates = set()
+    reserved_ranges = []
+    for r in reservas_mes:
+        # recorta al mes para no mandar 2000 días si alguien reserva meses
+        start = max(r.check_in, month_start)
+        end = min(r.check_out, month_end)
+        for d in _date_range_inclusive(start, end):
+            reserved_dates.add(d.isoformat())
+        reserved_ranges.append({
+            "id": r.id,
+            "check_in": r.check_in.isoformat(),
+            "check_out": r.check_out.isoformat(),
+        })
+
+    context = {
         "year": year,
         "month": month,
         "month_name": month_name,
-        "month_days": month_days,
         "prev_year": prev_year,
         "prev_month": prev_month,
         "next_year": next_year,
         "next_month": next_month,
-    })
+        "weeks": weeks,
+        # para JS
+        "reserved_dates_json": json.dumps(sorted(reserved_dates)),
+        "reserved_ranges_json": json.dumps(reserved_ranges),
+    }
+    return render(request, "calendario.html", context)
 
-def _parse_time(payload, key, default):
-    return datetime.strptime(payload.get(key, default), "%H:%M").time()
-
-@require_POST
-@login_required
-def reservar_rango(request):
-    payload = json.loads(request.body.decode("utf-8"))
-
-    year = int(payload["year"])
-    month = int(payload["month"])
-    day_from = int(payload["from"])
-    day_to = int(payload["to"])
-
-    hora_inicio = _parse_time(payload, "hora_inicio", "09:00")
-    hora_fin = _parse_time(payload, "hora_fin", "10:00")
-
-    a, b = sorted([day_from, day_to])
-
-    created = 0
-    errors = []
-
-    for d in range(a, b + 1):
-        try:
-            Reserva.objects.create(
-                usuario=request.user,
-                fecha=date(year, month, d),
-                hora_inicio=hora_inicio,
-                hora_fin=hora_fin,
-            )
-            created += 1
-        except Exception as e:
-            errors.append({"day": d, "error": str(e)})
-
-    return JsonResponse({"ok": True, "created": created, "errors": errors})
 
 @require_POST
 @login_required
-def cancelar_rango(request):
-    payload = json.loads(request.body.decode("utf-8"))
+def api_crear_reserva(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+        start_s = payload.get("check_in")
+        end_s = payload.get("check_out")
+        check_in = datetime.strptime(start_s, "%Y-%m-%d").date()
+        check_out = datetime.strptime(end_s, "%Y-%m-%d").date()
+    except Exception:
+        return JsonResponse({"ok": False, "error": "Payload inválido. Usa YYYY-MM-DD."}, status=400)
 
-    year = int(payload["year"])
-    month = int(payload["month"])
-    day_from = int(payload["from"])
-    day_to = int(payload["to"])
+    if check_in > check_out:
+        return JsonResponse({"ok": False, "error": "check_in no puede ser mayor que check_out."}, status=400)
 
-    hora_inicio = _parse_time(payload, "hora_inicio", "09:00")
-    hora_fin = _parse_time(payload, "hora_fin", "10:00")
+    # Reglas “hotel”: no permitir solapes (globales)
+    solape = Reserva.objects.filter(
+        check_in__lte=check_out,
+        check_out__gte=check_in,
+    ).exists()
 
-    a, b = sorted([day_from, day_to])
+    if solape:
+        return JsonResponse({"ok": False, "error": "Ese rango ya está reservado."}, status=409)
 
-    qs = Reserva.objects.filter(
+    reserva = Reserva.objects.create(
         usuario=request.user,
-        fecha__gte=date(year, month, a),
-        fecha__lte=date(year, month, b),
-        hora_inicio=hora_inicio,
-        hora_fin=hora_fin,
+        check_in=check_in,
+        check_out=check_out,
     )
 
-    deleted, _ = qs.delete()
-    return JsonResponse({"ok": True, "deleted": deleted})
+    return JsonResponse({
+        "ok": True,
+        "reserva": {
+            "id": reserva.id,
+            "check_in": reserva.check_in.isoformat(),
+            "check_out": reserva.check_out.isoformat(),
+        }
+    }, status=201)
 
-@require_GET
+
 @login_required
-def reservas_mes(request):
-    year = int(request.GET["year"])
-    month = int(request.GET["month"])
+def mis_reservas_view(request):
+    reservas = Reserva.objects.filter(usuario=request.user).order_by("-created_at")
+    return render(request, "mis_reservas.html", {"reservas": reservas})
 
-    reservas = Reserva.objects.filter(
-        usuario=request.user,
-        fecha__year=year,
-        fecha__month=month
-    ).values_list("fecha", flat=True)
 
-    days = sorted({d.day for d in reservas})
-    return JsonResponse({"ok": True, "days": days})
+@require_POST
+@login_required
+def api_eliminar_reserva(request, reserva_id: int):
+    reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
+    reserva.delete()
+    return JsonResponse({"ok": True})

@@ -12,5 +12,6 @@ class UsuarioAdmin(UserAdmin):
 
 @admin.register(Reserva)
 class ReservaAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'fecha', 'hora_inicio', 'hora_fin', 'creado_en')
-    list_filter = ('fecha',)
+    list_display = ("id", "usuario", "check_in", "check_out", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("usuario__username",)
