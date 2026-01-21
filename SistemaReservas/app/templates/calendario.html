@@ -1,52 +1,57 @@
+
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Calendario</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../static/css/calendario.css">
-</head>
+  <meta charset="UTF-8">
+  <title>Calendario</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<body>
+  <link rel="stylesheet" href="{% static 'css/calendario.css' %}">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <script src="{% static 'javascript/calendario.js' %}" defer></script>
+</head>
+<body data-year="{{ year }}" data-month="{{ month }}">
 
 <div class="calendar-wrapper">
 
-    <!-- CABECERA -->
-    <div class="calendar-header">
-        <a href="?year={{ prev_year }}&month={{ prev_month }}" class="nav-btn">&lt;</a>
+  <div class="calendar-header">
+    <a href="?year={{ prev_year }}&month={{ prev_month }}" class="nav-btn">&lt;</a>
+    <h2 class="calendar-title">{{ month_name }} {{ year }}</h2>
+    <a href="?year={{ next_year }}&month={{ next_month }}" class="nav-btn">&gt;</a>
+  </div>
 
-        <h2 class="calendar-title">{{ month_name }} {{ year }}</h2>
+  <div class="calendar-grid">
+    <div class="day-name">L</div><div class="day-name">M</div><div class="day-name">X</div>
+    <div class="day-name">J</div><div class="day-name">V</div><div class="day-name">S</div>
+    <div class="day-name">D</div>
 
-        <a href="?year={{ next_year }}&month={{ next_month }}" class="nav-btn">&gt;</a>
+    {% for week in month_days %}
+      {% for day in week %}
+        {% if day %}
+          <div class="day js-day" data-day="{{ day.num }}">
+            <span class="day-number">{{ day.num }}</span>
+          </div>
+        {% else %}
+          <div class="day empty"></div>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <h3 class="modal-title">Gestionar reserva</h3>
+    <p id="modalText" class="modal-text"></p>
+
+    <div class="modal-actions">
+      <button id="btnClose" class="btn btn-secondary" type="button">Cerrar</button>
+      <button id="btnCancelRange" class="btn btn-danger" type="button">Cancelar</button>
+      <button id="btnReserveRange" class="btn btn-primary" type="button">Reservar</button>
     </div>
-
-    <!-- CALENDARIO -->
-    <div class="calendar-grid">
-
-        <!-- Días de la semana -->
-        <div class="day-name">L</div>
-        <div class="day-name">M</div>
-        <div class="day-name">X</div>
-        <div class="day-name">J</div>
-        <div class="day-name">V</div>
-        <div class="day-name">S</div>
-        <div class="day-name">D</div>
-
-        <!-- Días del mes -->
-        {% for week in month_days %}
-            {% for day in week %}
-                {% if day %}
-                    <div class="day">
-                        <span class="day-number">{{ day.num }}</span>
-                    </div>
-                {% else %}
-                    <div class="day empty"></div>
-                {% endif %}
-            {% endfor %}
-        {% endfor %}
-
-    </div>
-
+  </div>
 </div>
 
 </body>

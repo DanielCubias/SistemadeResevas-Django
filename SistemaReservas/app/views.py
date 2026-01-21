@@ -1,39 +1,18 @@
-
 import calendar
-from datetime import date
+import json
+from datetime import date, datetime
 
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login
-from django.shortcuts import render,redirect
 from django.contrib import messages
+from django.contrib.auth import authenticate, login
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import render, redirect
+from django.views.decorators.http import require_POST, require_GET
+
 from .models import Reserva
-import calendar
-from datetime import date
-from django.shortcuts import render
-
-
-
-# utilizo lo siguinete porque tengo un modelo de usuario personalizado
-# si no, dara error : Manager isn't available; 'auth.User' has been swapped for 'app.Usuario'
-# para arreglarlo he importado mi modelo personalizado
-
-
-
 
 User = get_user_model()
-
-
-
-
-# Create your views here.
-
-# Usa loader.get_template + HttpResponse
-# solo si necesito un control muy específico sobre el proceso de renderizado.
-
-# def index(request):
-#     template = loader.get_template('login.html')
-#     return HttpResponse(template.render())
 
 def registro(request):
     if request.method == "POST":
@@ -43,38 +22,22 @@ def registro(request):
         password2 = request.POST["password2"]
 
         if not username or not email or not password or not password2:
-            messages.error(request, "hacen faltan campos por rellenar")
-            return  render(request, "registro.html")
+            messages.error(request, "Faltan campos por rellenar")
+            return render(request, "registro.html")
 
         if password != password2:
-            messages.error(request, "las contraseñas no coinciden")
-            return render(request,"registro.html")
-
-        User = get_user_model()
+            messages.error(request, "Las contraseñas no coinciden")
+            return render(request, "registro.html")
 
         if User.objects.filter(username=username).exists():
             messages.error(request, "El nombre de usuario ya existe")
             return render(request, "registro.html")
 
-        User.objects.create_user(
-            username=username,
-            email = email,
-            password= password
-        )
-
-        messages.success(request,"Usuari creado correctamente")
+        User.objects.create_user(username=username, email=email, password=password)
+        messages.success(request, "Usuario creado correctamente")
         return redirect("login")
 
     return render(request, "registro.html")
-# def volverlogin(request):
-#     return render(request, 'login.html')
-
-@login_required
-def mis_reservas(request):
-    reservas = Reserva.objects.filter(usuario=request.user).order_by('fecha', 'hora_inicio')
-    return render(request, 'mis_reservas.html', {'reservas': reservas})
-
-
 
 def login_view(request):
     if request.method == "POST":
@@ -82,58 +45,37 @@ def login_view(request):
         password = request.POST.get("password")
 
         user = authenticate(request, username=username, password=password)
-
         if user:
             login(request, user)
-            return redirect("mis_reservas")
+            return redirect("calendario")
 
-        return render(request, "login.html", {
-            "error": "Usuario o contraseña incorrectos"
-        })
+        return render(request, "login.html", {"error": "Usuario o contraseña incorrectos"})
 
     return render(request, "login.html")
 
 @login_required
-def delete_count(request):
-    if request.method == "POST":
-        request.user.delete()
-        return redirect("login")
+def mis_reservas(request):
+    reservas = Reserva.objects.filter(usuario=request.user).order_by("fecha", "hora_inicio")
+    return render(request, "mis_reservas.html", {"reservas": reservas})
 
-
-
-def reserva(request):
-    return render(request, "calendario.html")
-
-
-
-
-
+@login_required
 def calendario(request):
-    # Mes/año actual por defecto, o el que venga por querystring
     today = date.today()
     year = int(request.GET.get("year", today.year))
     month = int(request.GET.get("month", today.month))
 
-    # Asegurar que la semana empieza en lunes
     calendar.setfirstweekday(calendar.MONDAY)
-
-    # Matriz de semanas: 0 significa "hueco" (días del mes anterior/siguiente)
     month_matrix = calendar.monthcalendar(year, month)
 
-    # Convertimos a estructura amigable para el template
     month_days = []
     for week in month_matrix:
         week_days = []
         for d in week:
-            if d == 0:
-                week_days.append(None)
-            else:
-                week_days.append({"num": d})
+            week_days.append({"num": d} if d != 0 else None)
         month_days.append(week_days)
 
-    month_name = calendar.month_name[month]  # "January", "February", etc.
+    month_name = calendar.month_name[month]
 
-    # Mes anterior / siguiente
     prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
     next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
 
@@ -147,3 +89,79 @@ def calendario(request):
         "next_year": next_year,
         "next_month": next_month,
     })
+
+def _parse_time(payload, key, default):
+    return datetime.strptime(payload.get(key, default), "%H:%M").time()
+
+@require_POST
+@login_required
+def reservar_rango(request):
+    payload = json.loads(request.body.decode("utf-8"))
+
+    year = int(payload["year"])
+    month = int(payload["month"])
+    day_from = int(payload["from"])
+    day_to = int(payload["to"])
+
+    hora_inicio = _parse_time(payload, "hora_inicio", "09:00")
+    hora_fin = _parse_time(payload, "hora_fin", "10:00")
+
+    a, b = sorted([day_from, day_to])
+
+    created = 0
+    errors = []
+
+    for d in range(a, b + 1):
+        try:
+            Reserva.objects.create(
+                usuario=request.user,
+                fecha=date(year, month, d),
+                hora_inicio=hora_inicio,
+                hora_fin=hora_fin,
+            )
+            created += 1
+        except Exception as e:
+            errors.append({"day": d, "error": str(e)})
+
+    return JsonResponse({"ok": True, "created": created, "errors": errors})
+
+@require_POST
+@login_required
+def cancelar_rango(request):
+    payload = json.loads(request.body.decode("utf-8"))
+
+    year = int(payload["year"])
+    month = int(payload["month"])
+    day_from = int(payload["from"])
+    day_to = int(payload["to"])
+
+    hora_inicio = _parse_time(payload, "hora_inicio", "09:00")
+    hora_fin = _parse_time(payload, "hora_fin", "10:00")
+
+    a, b = sorted([day_from, day_to])
+
+    qs = Reserva.objects.filter(
+        usuario=request.user,
+        fecha__gte=date(year, month, a),
+        fecha__lte=date(year, month, b),
+        hora_inicio=hora_inicio,
+        hora_fin=hora_fin,
+    )
+
+    deleted, _ = qs.delete()
+    return JsonResponse({"ok": True, "deleted": deleted})
+
+@require_GET
+@login_required
+def reservas_mes(request):
+    year = int(request.GET["year"])
+    month = int(request.GET["month"])
+
+    reservas = Reserva.objects.filter(
+        usuario=request.user,
+        fecha__year=year,
+        fecha__month=month
+    ).values_list("fecha", flat=True)
+
+    days = sorted({d.day for d in reservas})
+    return JsonResponse({"ok": True, "days": days})

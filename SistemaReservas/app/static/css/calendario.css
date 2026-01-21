@@ -87,3 +87,116 @@ body {
     background: transparent;
     cursor: default;
 }
+
+/* Día seleccionado */
+.day.selected {
+  background: #dcfce7;              /* verde suave */
+  border: 2px solid #16a34a;        /* verde */
+}
+
+.day.selected .day-number {
+  color: #166534;
+}
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 9999;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+}
+
+.modal-title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #111827;
+}
+
+.modal-text {
+  margin: 0 0 16px;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1e40af;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.btn-secondary:hover {
+  background: #d1d5db;
+}
+
+.day.preview {
+  background: #e0f2fe; /* azul suave */
+}
+
+.day.start, .day.end {
+  outline: 2px solid #2563eb;
+}
+
+/* Preview del rango (azul suave) */
+.day.preview {
+  background: #e0f2fe;
+}
+.day.start, .day.end {
+  outline: 2px solid #2563eb;
+}
+
+/* Confirmado (verde) */
+.day.selected {
+  background: #dcfce7;
+  border: 2px solid #16a34a;
+}
+.day.selected .day-number {
+  color: #166534;
+}
+
+/* Botón peligro (cancelar) */
+.btn-danger {
+  background: #dc2626;
+  color: white;
+}
+.btn-danger:hover {
+  background: #991b1b;
+}
