@@ -15,7 +15,7 @@
 
 <!--    nunca meter un form dentro de otro form-->
 
-    <form action="{% url 'registro' %}" method="POST">
+    <form action="{% url 'registration' %}" method="POST">
         {% csrf_token %}
 
           {% if messages %}
