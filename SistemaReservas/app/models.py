@@ -6,7 +6,9 @@ from django.db import models
 # Create your models here.
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
-
+from django.conf import settings
+from django.db import models
+from django.core.exceptions import ValidationError
 
 
 
@@ -18,9 +20,7 @@ class Usuario(AbstractUser):
     )
 
 
-from django.conf import settings
-from django.db import models
-from django.core.exceptions import ValidationError
+
 
 
 class Reserva(models.Model):

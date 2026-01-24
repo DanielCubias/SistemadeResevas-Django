@@ -1,13 +1,38 @@
 import calendar
 import json
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta, datetime
 
+from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.template.context_processors import request
 from django.views.decorators.http import require_POST
+from pyexpat.errors import messages
 
 from .models import Reserva
+
+
+
+def login(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect("home")  # nombre de tu url principal
+        else:
+            messages.error(request, "Usuario o contraseña incorrectos")
+
+    return render(request, "login.html")
+
+
+
+
 
 
 def _month_prev_next(year: int, month: int):
@@ -138,3 +163,4 @@ def api_eliminar_reserva(request, reserva_id: int):
     reserva = get_object_or_404(Reserva, id=reserva_id, usuario=request.user)
     reserva.delete()
     return JsonResponse({"ok": True})
+
